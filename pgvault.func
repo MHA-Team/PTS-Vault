@@ -144,7 +144,7 @@ serverprime() {
   tee <<-EOF
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🚀 PG Vault ~ Server Recall            📓 Reference: pgvault.pgblitz.com
+🚀 Backup & Restore ~ Server Recall 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 📂 Current [${server_id}] & Prior Servers Detected:
@@ -214,7 +214,7 @@ backup_all_start() {
     tee <<-EOF
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PG Vault - Backing Up: $p
+ Backing Up: $p
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 EOF
@@ -236,7 +236,7 @@ backup_start() {
     tee <<-EOF
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PG Vault - Backing Up: $p
+ Backing Up: $p
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 EOF
@@ -255,18 +255,7 @@ EOF
 
 backup_process() {
   initial2
-  #tee <<-EOF
 
-  #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  #↘️  Determining Initial File Size - $program_var
-  #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  #EOF
-  #size=$(du -sh --apparent-size /opt/appdata/$program_var | /usr/bin/awk '{print $1}')
-  #sleep 2
-  #echo "Initial File Size: $size"
-  #sleep 2
-
-  ##### Stop Docker Container if Running
   runningcheck
   if [ "$running" == "1" ]; then
     tee <<-EOF
@@ -298,11 +287,6 @@ EOF
     --exclude-from=/opt/pgvault/exclude.list \
     -C /opt/appdata/${program_var} -cvf /opt/appdata/plexguide/${program_var}.tar ./
 
-  #tar \
-  #--warning=no-file-changed --ignore-failed-read --absolute-names --warning=no-file-removed \
-  #--exclude-from=/opt/pgvault/exclude.list \
-  #-cfv ${program_var}.tar /opt/appdata/${program_var}
-
   ##### Restart Docker Application if was Running Prior
   if [ "$running" == "1" ]; then
     tee <<-EOF
@@ -325,13 +309,30 @@ EOF
 
 EOF
 
+# User specifying  VARS
+useragent="$(cat /var/plexguide/uagent)"
+bwlimit="$(cat /var/plexguide/blitz.bw)"
+
+vfs_dcs="$(cat /var/plexguide/vfs_dcs)"
+vfs_mt="$(cat /var/plexguide/vfs_mt)"
+vfs_t="$(cat /var/plexguide/vfs_t)"
+vfs_c="$(cat /var/plexguide/vfs_c)"
+
+
   rclone --config /opt/appdata/plexguide/rclone.conf mkdir gdrive:/plexguide/backup/${server_id} 1>/dev/null 2>&1
 
-  rclone --config /opt/appdata/plexguide/rclone.conf \
-    --stats-one-line --stats 1s --progress \
-    moveto ${tarlocation}/${program_var}.tar \
+  rclone moveto ${tarlocation}/${program_var}.tar \
     gdrive:/plexguide/backup/${server_id}/${program_var}.tar \
-    -v --checksum --drive-chunk-size=64M --transfers=8
+	--config /opt/appdata/plexguide/rclone.conf \
+	-v --checksum --stats-one-line --stats 1s --progress \
+	--tpslimit=10 \
+	--checkers="$vfs_c" \
+	--transfers="$vfs_t" \
+	--no-traverse \
+	--fast-list \
+	--bwlimit="$bwlimit" \
+	--drive-chunk-size="$vfs_dcs" \
+	--user-agent="$useragent"
 
   ##### Remove File Incase
   rm -rf ${tarlocation}/${program_var}.tar 1>/dev/null 2>&1
@@ -345,7 +346,7 @@ restore_all_start() {
     tee <<-EOF
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PG Vault - Restoring: $p
+ Restoring: $p
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 EOF
@@ -369,7 +370,7 @@ restore_start() {
     tee <<-EOF
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PG Vault - Restoring: $p
+ Restoring: $p
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 EOF
@@ -409,12 +410,28 @@ EOF
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 EOF
+        # User specifying  VARS
+        useragent="$(cat /var/plexguide/uagent)"
+        bwlimit="$(cat /var/plexguide/blitz.bw)"
 
-  rclone --config /opt/appdata/plexguide/rclone.conf --stats-one-line \
-    --stats 1s --progress \
-    copy gdrive:/plexguide/backup/${srecall}/${program_var}.tar \
-    ${tarlocation} \
-    -v --checksum --drive-chunk-size=64M --transfers=8
+        vfs_dcs="$(cat /var/plexguide/vfs_dcs)"
+        vfs_mt="$(cat /var/plexguide/vfs_mt)"
+        vfs_t="$(cat /var/plexguide/vfs_t)"
+        vfs_c="$(cat /var/plexguide/vfs_c)"
+
+
+rclone copy gdrive:/plexguide/backup/${srecall}/${program_var}.tar  ${tarlocation} \
+	--config /opt/appdata/plexguide/rclone.conf \
+	-v --checksum --stats-one-line --stats 1s --progress \
+	--tpslimit=10 \
+	--checkers="$vfs_c" \
+	--transfers="$vfs_t" \
+	--no-traverse \
+	--fast-list \
+	--bwlimit="$bwlimit" \
+	--drive-chunk-size="$vfs_dcs" \
+	--user-agent="$useragent"
+
 
   ##### Stop Docker Container if Running
   runningcheck
@@ -475,7 +492,7 @@ vaultbackup() {
   tee <<-EOF
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🚀 PG Vault ~ Data Storage             📓 Reference: pgvault.pgblitz.com
+🚀 Backup & Restore ~ Data Storage
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 📂 App Data available to Backup
@@ -524,7 +541,7 @@ vaultrestore() {
   tee <<-EOF
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🚀 PG Vault ~ Data Recall              📓 Reference: pgvault.pgblitz.com
+🚀 Backup & Restore  ~ Data Recall           
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 📂 App Data available to Restore
@@ -568,10 +585,10 @@ primaryinterface() {
   tee <<-EOF
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📁  PG Vault Interface ~ 📓 Reference: pgvault.pgblitz.com
+📁 Backup & Restore Interface
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🌵  PG Disk Used Space: $used of $capacity | $percentage Used Capacity
+🌵 Disk Used Space: $used of $capacity | $percentage Used Capacity
 
 [1] Data Backup
 [2] Data Restore
