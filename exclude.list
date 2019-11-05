@@ -3,6 +3,7 @@
 ./database/Library/Application Support/Plex Media Server/Logs
 ./database/Library/Application Support/Plex Media Server/Crash Reports
 ./transcoding-temp
+./nzbget/*.log
 ./log
 ./logs
 ./Log
