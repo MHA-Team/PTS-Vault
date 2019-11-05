@@ -2,8 +2,12 @@
 ./database/Library/Application Support/Plex Media Server/Cache/Transcode
 ./database/Library/Application Support/Plex Media Server/Logs
 ./database/Library/Application Support/Plex Media Server/Crash Reports
+./database/Library/Application Support/Plex Media Server/Metadata/*.bif
 ./transcoding-temp
 ./nzbget/*.log
+./radarr/logs/*.txt
+./sonarr/logs/*.txt
+./lidarr/logs
 ./log
 ./logs
 ./Log
@@ -14,4 +18,4 @@
 ./Backups
 ./transcodes
 ./Transcodes
-*.bif
+
