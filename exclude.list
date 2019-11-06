@@ -18,4 +18,5 @@
 ./Backups
 ./transcodes
 ./Transcodes
+*.bif
 
