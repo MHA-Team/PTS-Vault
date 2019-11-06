@@ -3,6 +3,7 @@
 ./database/Library/Application Support/Plex Media Server/Logs
 ./database/Library/Application Support/Plex Media Server/Crash Reports
 ./database/Library/Application Support/Plex Media Server/Metadata/*.bif
+./database/Library/Application Support/Plex Media Server/Media/*.bif
 ./transcoding-temp
 ./nzbget/*.log
 ./radarr/logs/*.txt
