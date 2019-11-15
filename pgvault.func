@@ -445,7 +445,10 @@ EOF
   tar -C /opt/appdata/${program_var} -xvf ${tarlocation}/${program_var}.tar
   chown -R 1000:1000 "/opt/appdata/${program_var}"
   chmod -R 775 "/opt/appdata/${program_var}"
-	app=$program_var
+  ##rebuild app after restore
+    echo -e $program_var >>/tmp/restore.app
+    sed -i -e "/plex/d" /tmp/restore.app
+	app=$(cat /tmp/restore.app)
     if [ -e "/opt/coreapps/apps/$app.yml" ]; then ansible-playbook /opt/coreapps/apps/$app.yml; fi
     if [ -e "/opt/communityapps/$app.yml" ]; then ansible-playbook /opt/communityapps/apps/$app.yml; fi  
 
