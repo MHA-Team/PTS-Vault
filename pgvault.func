@@ -446,8 +446,8 @@ EOF
   chown -R 1000:1000 "/opt/appdata/${program_var}"
   chmod -R 775 "/opt/appdata/${program_var}"
   ##rebuild app after restore
-    if [ -e "/opt/coreapps/apps/$program_var.yml" ]; then ansible-playbook /opt/coreapps/apps/$program_var.yml; fi
-    if [ -e "/opt/communityapps/$program_var.yml" ]; then ansible-playbook /opt/communityapps/apps/$program_var.yml; fi  
+    if [ -e "/opt/coreapps/apps/${program_var}.yml" ]; then ansible-playbook /opt/coreapps/apps/${program_var}.yml; fi
+    if [ -e "/opt/communityapps/${program_var}.yml" ]; then ansible-playbook /opt/communityapps/apps/${program_var}.yml; fi  
 
   ##### Restart Docker Application if was Running Prior
   if [ "$running" == "1" ]; then
