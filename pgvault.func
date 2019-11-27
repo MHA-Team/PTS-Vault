@@ -387,10 +387,25 @@ EOF
 
 
 redeploy(){
+  tee <<-EOF
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+↘️ Redeploy for $program_var | please wait
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+EOF
+
 app=$(cat /tmp/program_var)
   ##rebuild app after restore
-    if [[ ! -f "/opt/coreapps/apps/"$app".yml" ]]; then ansible-playbook /opt/coreapps/apps/$app.yml; fi
-    if [[ ! -f "/opt/communityapps/"$app".yml" ]]; then ansible-playbook /opt/communityapps/apps/$app.yml; fi
+    if [ ! -e "/opt/coreapps/apps/"$app".yml" ]; then ansible-playbook /opt/coreapps/apps/$app.yml >/dev/null 2>&1; fi
+    if [ ! -e "/opt/communityapps/"$app".yml" ]; then ansible-playbook /opt/communityapps/apps/$app.yml >/dev/null 2>&1; fi
+  tee <<-EOF
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+↘️ Redeploy for $program_var | done
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+EOF
 }
 
 restore_process() {
@@ -422,11 +437,6 @@ EOF
     copy gdrive:/plexguide/backup/${srecall}/${program_var}.tar \
     ${tarlocation} \
     -v --checksum --drive-chunk-size=64M --transfers=8
-  ##rebuild app after restore
-    echo -e $program_var >>/tmp/restore.app
-	app=$(cat /tmp/restore.app)
-    if [ -e "/opt/coreapps/apps/$app.yml" ]; then ansible-playbook /opt/coreapps/apps/$app.yml; fi
-    if [ -e "/opt/communityapps/$app.yml" ]; then ansible-playbook /opt/communityapps/apps/$app.yml; fi  
 
   ##### Stop Docker Container if Running
   runningcheck
