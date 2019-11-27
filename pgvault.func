@@ -355,7 +355,7 @@ EOF
     echo $p >/tmp/program_var
     # Execute Main Program
     restore_process
-
+    redeploy
     sleep 2
   done </var/plexguide/pgvault.apprecall
   final
@@ -379,10 +379,18 @@ EOF
     echo $p >/tmp/program_var
     # Execute Main Program
     restore_process
-
+    redeploy
     sleep 2
   done </var/plexguide/pgvault.buildup
   final
+}
+
+
+redeploy(){
+app=$(cat /tmp/program_var)
+  ##rebuild app after restore
+    if [[ ! -f "/opt/coreapps/apps/"$app".yml" ]]; then ansible-playbook /opt/coreapps/apps/$app.yml; fi
+    if [[ ! -f "/opt/communityapps/"$app".yml" ]]; then ansible-playbook /opt/communityapps/apps/$app.yml; fi
 }
 
 restore_process() {
@@ -414,6 +422,11 @@ EOF
     copy gdrive:/plexguide/backup/${srecall}/${program_var}.tar \
     ${tarlocation} \
     -v --checksum --drive-chunk-size=64M --transfers=8
+  ##rebuild app after restore
+    echo -e $program_var >>/tmp/restore.app
+	app=$(cat /tmp/restore.app)
+    if [ -e "/opt/coreapps/apps/$app.yml" ]; then ansible-playbook /opt/coreapps/apps/$app.yml; fi
+    if [ -e "/opt/communityapps/$app.yml" ]; then ansible-playbook /opt/communityapps/apps/$app.yml; fi  
 
   ##### Stop Docker Container if Running
   runningcheck
@@ -445,11 +458,6 @@ EOF
   tar -C /opt/appdata/${program_var} -xvf ${tarlocation}/${program_var}.tar
   chown -R 1000:1000 "/opt/appdata/${program_var}"
   chmod -R 775 "/opt/appdata/${program_var}"
-  ##rebuild app after restore
-    echo -e $program_var >>/tmp/restore.app
-	app=$(cat /tmp/restore.app)
-    if [ -e "/opt/coreapps/apps/$app.yml" ]; then ansible-playbook /opt/coreapps/apps/$app.yml; fi
-    if [ -e "/opt/communityapps/$app.yml" ]; then ansible-playbook /opt/communityapps/apps/$app.yml; fi  
 
   ##### Restart Docker Application if was Running Prior
   if [ "$running" == "1" ]; then
