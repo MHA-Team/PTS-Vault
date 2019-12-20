@@ -361,7 +361,6 @@ EOF
   final
 }
 
-
 restore_start() {
 
   while read p; do
@@ -374,7 +373,6 @@ Vault - Restoring: $p
 EOF
 
     sleep 2.5
-
     # Store Used Program
     echo $p >/tmp/program_var
     # Execute Main Program
@@ -399,11 +397,11 @@ app=$(cat /tmp/program_var)
 
   ##rebuild app after restore
     if [[ -e /opt/coreapps/apps/$app.yml ]]; then
-                ansible-playbook /opt/coreapps/apps/$app.yml
+             ansible-playbook /opt/coreapps/apps/$app.yml 1>/dev/null 2>&1
     elif [[ -e /opt/communityapps/$app.yml ]]; then
-                ansible-playbook /opt/communityapps/apps/$app.yml
+             ansible-playbook /opt/communityapps/apps/$app.yml 1>/dev/null 2>&1
     elif [[ -e /opt/mycontainers/$app.yml ]]; then
-                ansible-playbook /opt/mycontainers/apps/$app.yml
+             ansible-playbook /opt/mycontainers/apps/$app.yml 1>/dev/null 2>&1
     else echo "1" ;fi
 
   tee <<-EOF
