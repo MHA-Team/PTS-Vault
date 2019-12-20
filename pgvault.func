@@ -355,7 +355,6 @@ EOF
     echo $p >/tmp/program_var
     # Execute Main Program
     restore_process
-    redeploy
     sleep 2
   done </var/plexguide/pgvault.apprecall
   final
@@ -377,7 +376,6 @@ EOF
     echo $p >/tmp/program_var
     # Execute Main Program
     restore_process
-    redeploy
     sleep 2
   done </var/plexguide/pgvault.buildup
   final
@@ -485,7 +483,8 @@ EOF
 
 EOF
     sleep 2
-    docker restart $program_var 1>/dev/null 2>&1
+    #docker restart $program_var 1>/dev/null 2>&1
+	redeploy
   fi
 
   ##### Remove File Incase
