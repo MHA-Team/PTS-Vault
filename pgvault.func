@@ -308,6 +308,12 @@ EOF
 
 EOF
 
+start=$(cat /var/plexguide/server.id)
+server_id=$(cat /var/plexguide/server.id)
+serveridcreate=$(tree -d -L 1 /mnt/gdrive/plexguide/backup | awk '{print $2}' | tail -n +2 | head -n -2 | grep "$(cat /var/plexguide/server.id)")
+if [[ $start != $serveridcreate ]]; then
+rclone --config /opt/appdata/plexguide/rclone.conf mkdir gdrive:/plexguide/backup/${server_id};fi
+
 useragent="$(cat /var/plexguide/uagent)"
 bwlimit="$(cat /var/plexguide/blitz.bw)"
 
@@ -315,7 +321,6 @@ vfs_dcs="$(cat /var/plexguide/vfs_dcs)"
 vfs_mt="$(cat /var/plexguide/vfs_mt)"
 vfs_t="$(cat /var/plexguide/vfs_t)"
 vfs_c="$(cat /var/plexguide/vfs_c)"
-
 
   rclone --config /opt/appdata/plexguide/rclone.conf mkdir gdrive:/plexguide/backup/${server_id} 1>/dev/null 2>&1
 
