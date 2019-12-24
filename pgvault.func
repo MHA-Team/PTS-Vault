@@ -7,7 +7,7 @@
 runningcheck() {
   initial2
   runcheck5=$(docker ps | grep ${program_var})
-  if [ "$runcheck5" != "" ]; then running=1; else running=0; fi
+  if [[ "$runcheck5" != "" ]]; then running=1; else running=0; fi
 }
 
 initial() {
@@ -256,7 +256,7 @@ backup_process() {
   initial2
   ##### Stop Docker Container if Running
   runningcheck
-  if [ "$running" == "1" ]; then
+  if [[ "$running" == "1" ]]; then
     tee <<-EOF
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -284,12 +284,11 @@ EOF
   tar \
     --warning=no-file-changed --ignore-failed-read --absolute-names --warning=no-file-removed \
     --exclude-from=/opt/pgvault/exclude.list \
-    -C /opt/appdata/${program_var} -cvf /opt/appdata/plexguide/${program_var}.tar ./
+    -C /opt/appdata/${program_var} -cvf ${tarlocation}/${program_var}.tar ./
 
   ##### Restart Docker Application if was Running Prior
-  if [ "$running" == "1" ]; then
+  if [[ "$running" == "1" ]]; then
     tee <<-EOF
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ↘️  Restarting Docker Application - $program_var
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -307,19 +306,13 @@ EOF
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 EOF
-
-start=$(cat /var/plexguide/server.id)
-serveridcreate=$(tree -d -L 1 /mnt/gdrive/plexguide/backup | awk '{print $2}' | tail -n +2 | head -n -2 | grep "$(cat /var/plexguide/server.id)")
-if [[ $start != $serveridcreate ]]; then
-rclone mkdir gdrive:/plexguide/backup/$(cat /var/plexguide/server.id) --config /opt/appdata/plexguide/rclone.conf;fi
-
 useragent="$(cat /var/plexguide/uagent)"
-bwlimit="$(cat /var/plexguide/blitz.bw)"
+bwlimit="off"
 
-vfs_dcs="$(cat /var/plexguide/vfs_dcs)"
-vfs_mt="$(cat /var/plexguide/vfs_mt)"
-vfs_t="$(cat /var/plexguide/vfs_t)"
-vfs_c="$(cat /var/plexguide/vfs_c)"
+vfs_dcs="64M"
+vfs_mt="580G"
+vfs_t="1"
+vfs_c="2"
 
   rclone --config /opt/appdata/plexguide/rclone.conf mkdir gdrive:/plexguide/backup/${server_id} 1>/dev/null 2>&1
 
@@ -359,10 +352,12 @@ EOF
     echo $p >/tmp/program_var
     # Execute Main Program
     restore_process
+
     sleep 2
   done </var/plexguide/pgvault.apprecall
   final
 }
+
 
 restore_start() {
 
@@ -376,45 +371,16 @@ Vault - Restoring: $p
 EOF
 
     sleep 2.5
+
     # Store Used Program
     echo $p >/tmp/program_var
     # Execute Main Program
     restore_process
+
     sleep 2
   done </var/plexguide/pgvault.buildup
   final
 }
-
-
-redeploy() {
-  tee <<-EOF
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-↘️ Redeploy for $program_var | please wait
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-EOF
-
-app=$(cat /tmp/program_var)
-
-  ##rebuild app after restore
-    if [[ -e /opt/coreapps/apps/$app.yml ]]; then
-             ansible-playbook /opt/coreapps/apps/$app.yml
-    elif [[ -e /opt/communityapps/$app.yml ]]; then
-             ansible-playbook /opt/communityapps/apps/$app.yml
-    elif [[ -e /opt/mycontainers/$app.yml ]]; then
-             ansible-playbook /opt/mycontainers/apps/$app.yml
-    else echo "1" ;fi
-
-  tee <<-EOF
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-↘️ Redeploy for $program_var | done
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-EOF
-}
-
 
 restore_process() {
   initial2
@@ -476,11 +442,22 @@ EOF
   tar -C /opt/appdata/${program_var} -xvf ${tarlocation}/${program_var}.tar
   chown -R 1000:1000 "/opt/appdata/${program_var}"
   chmod -R 775 "/opt/appdata/${program_var}"
+  ##rebuild app after restore
+    if [[ -e "/opt/coreapps/apps/$program_var.yml" ]]; then ansible-playbook /opt/coreapps/apps/$program_var.yml; fi
+    if [[ -e "/opt/communityapps/$program_var.yml" ]]; then ansible-playbook /opt/communityapps/apps/$program_var.yml; fi
+	if [[ -e "/opt/mycontainers/$program_var.yml" ]]; then ansible-playbook /opt/mycontainers/apps/$program_var.yml; fi  
 
-  if [ "$running" == "1" ]; then
+  ##### Restart Docker Application if was Running Prior
+  if [[ "$running" == "1" ]]; then
+    tee <<-EOF
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+↘️  Restarting Docker Application - $program_var
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+EOF
     sleep 2
-    #docker restart $program_var 1>/dev/null 2>&1
-	redeploy
+    docker restart $program_var 1>/dev/null 2>&1
   fi
 
   ##### Remove File Incase
@@ -494,7 +471,7 @@ vaultbackup() {
   notrun=$(cat /var/plexguide/program.temp)
   buildup=$(cat /var/plexguide/pgvault.output)
 
-  if [ "$buildup" == "" ]; then buildup="NONE"; fi
+  if [[ "$buildup" == "" ]]; then buildup="NONE"; fi
   tee <<-EOF
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -532,7 +509,7 @@ EOF
   cat /var/plexguide/pgvault.buildup >/tmp/appcheck.5
   cat /var/plexguide/pgvault.apprecall >>/tmp/appcheck.5
   current1=$(cat /tmp/appcheck.5 | grep "\<$typed\>")
-  if [ "$current1" == "" ]; then badinput && vaultbackup; fi
+  if [[ "$current1" == "" ]]; then badinput && vaultbackup; fi
 
   buildup
 }
@@ -582,7 +559,7 @@ EOF
 	current2=$(cat /tmp/appcheck.5 | grep "\<$typed\>")
 	echo $current2 >/var/plexguide/app_rebuild
 	#Rebuild Depending on Location
-	if [ "$current2" == "" ]; then badinput && vaultrestore; fi
+	if [[ "$current2" == "" ]]; then badinput && vaultrestore; fi
   buildup2
 }
 ##################################################### START Primary Interface
@@ -598,8 +575,8 @@ primaryinterface() {
 
 [1] Data Backup
 [2] Data Restore
-[3] Current Server ID  : $server_id
-[4] Processing Location: $tarlocation
+[3] Current Server ID   : $server_id
+[4] Processing Location : $tarlocation
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [Z] Exit
@@ -608,18 +585,18 @@ primaryinterface() {
 EOF
   read -p 'Type a Number | Press [ENTER]: ' typed </dev/tty
 
-  if [ "$typed" == "1" ]; then
+  if [[ "$typed" == "1" ]]; then
     vaultbackup
     primaryinterface
-  elif [ "$typed" == "2" ]; then
+  elif [[ "$typed" == "2" ]]; then
     serverprime
     vaultrestore
     primaryinterface
-  elif [ "$typed" == "3" ]; then
+  elif [[ "$typed" == "3" ]]; then
     echo "0" >/var/plexguide/server.id.stored
     bash /opt/plexguide/menu/interface/serverid.sh
     primaryinterface
-  elif [ "$typed" == "4" ]; then
+  elif [[ "$typed" == "4" ]]; then
     bash /opt/pgvault/location.sh
     primaryinterface
   elif [[ "$typed" == "Z" || "$typed" == "z" ]]; then
@@ -632,7 +609,7 @@ EOF
 ##################################################### END Primary Interface
 
 restorecheck() {
-  if [ "$restoreid" == "[NOT-SET]" ]; then
+  if [[ "$restoreid" == "[NOT-SET]" ]]; then
     tee <<-EOF
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
