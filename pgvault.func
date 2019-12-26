@@ -63,6 +63,10 @@ rclonelist() {
   ls -l /mnt/gdrive/plexguide/backup | grep "^d" | awk '{print $9}' >pgvault.serverlist
 }
 
+value() {
+bash /opt/plexguide/menu/pgbox/value.sh
+}
+
 pgboxrecall() {
   ls -p /opt/coreapps/apps | grep -v / >/var/plexguide/pgvault.apprecall
   while read p; do
@@ -442,10 +446,14 @@ EOF
   tar -C /opt/appdata/${program_var} -xvf ${tarlocation}/${program_var}.tar
   chown -R 1000:1000 "/opt/appdata/${program_var}"
   chmod -R 775 "/opt/appdata/${program_var}"
+
+  ##for rebuild plex and more ##
+    value
+
   ##rebuild app after restore
     if [[ -e "/opt/coreapps/apps/$program_var.yml" ]]; then ansible-playbook /opt/coreapps/apps/$program_var.yml; fi
     if [[ -e "/opt/communityapps/$program_var.yml" ]]; then ansible-playbook /opt/communityapps/apps/$program_var.yml; fi
-	if [[ -e "/opt/mycontainers/$program_var.yml" ]]; then ansible-playbook /opt/mycontainers/apps/$program_var.yml; fi  
+    if [[ -e "/opt/mycontainers/$program_var.yml" ]]; then ansible-playbook /opt/mycontainers/apps/$program_var.yml; fi  
 
   ##### Restart Docker Application if was Running Prior
   if [[ "$running" == "1" ]]; then
